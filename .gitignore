@@ -17,3 +17,6 @@ torrent++
 
 # IDE workspaces
 nbproject/
+
+# Makefile generated files
+.depend
