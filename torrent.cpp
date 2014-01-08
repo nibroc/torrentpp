@@ -2,13 +2,12 @@
 #include "bencode_value.h"
 #include "bdecode.h"
 
+#include "utestpp/utestpp.h"
+
 #include <fstream>
 #include <iterator>
 #include <iostream>
 #include <string>
-
-#define ASSERT_EQUAL(...) do { } while (0)
-#define ASSERT_TRUE(...) do { } while (0)
 
 void test_int()
 {
@@ -27,6 +26,10 @@ void test_string()
 	ASSERT_EQUAL(bdecode("5:hello"), bencode_value("hello"));
 	ASSERT_EQUAL(bdecode("11:hello world"), bencode_value("hello world"));
 	ASSERT_EQUAL(bdecode("9:!!!333@@@"), bencode_value("!!!333@@@"));
+	
+	ASSERT_THROWS(bdecode("9:!!!"));
+	ASSERT_THROWS(bdecode("-3:!!!"));
+	ASSERT_THROWS(bdecode("abc:!!!"));
 }
 
 void test_list()
