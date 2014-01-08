@@ -5,7 +5,9 @@
 
 #include <cstdint>
 #include <map>
+#include <ostream>
 #include <stdexcept>
+#include <string>
 #include <vector>
 
 class bencode_value {
@@ -41,7 +43,8 @@ public:
 	std::int64_t int_value() const { return int_; }
 	std::string string_value() const { return string_; }
 	
-	std::string bencode() const {
+	std::string bencode() const
+	{
 		switch (type_) {
 			case type::integer:
 				return ::bencode(int_);
@@ -63,12 +66,69 @@ public:
 		return bencode() < other.bencode();
 	}
 	
+	std::string to_string() const
+	{
+		switch (type_) {
+			case type::integer:
+				return std::to_string(int_);
+			case type::string:
+				return string_;
+			case type::list:
+				return list_to_string(list_);
+			case type::dict:
+				return dict_to_string(dict_);
+			case type::null:
+				throw std::runtime_error("Cannot dereference null bencode values");
+			default:
+				throw std::runtime_error("Unknown bencode_value type");
+		}
+	}
+	
+	bool operator==(const bencode_value& other)
+	{
+		if (type_ != other.type_) {
+			return false;
+		}
+		return bencode() == other.bencode();
+	}
+	
 private:
 	type type_;
 	int_type int_;
 	string_type string_;
 	list_type list_;
 	dict_type dict_;
+	
+	std::string list_to_string(const list_type& l) const
+	{
+		std::string s;
+		bool suppress_comma = true;
+		for (const auto& v : l) {
+			if (suppress_comma) {
+				suppress_comma = false;
+			} else {
+				s += ", ";
+			}
+			s += v.to_string();
+		}
+		return "[" + s + "]";
+	}
+	
+	std::string dict_to_string(const dict_type& d) const
+	{
+		std::string s;
+		bool suppress_comma = true;
+		for (const auto& v : d) {
+			if (suppress_comma) {
+				suppress_comma = false;
+			} else {
+				s += ", ";
+			}
+			s += v.first.to_string() + ": " + v.second.to_string();
+		}
+		return "{" + s + "}";
+	}
+	
 };
 
 #endif

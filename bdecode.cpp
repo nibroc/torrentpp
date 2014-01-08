@@ -5,20 +5,19 @@
 #include <stdexcept>
 #include <iostream>
 
-static bencode_value parse_string(const std::string& str)
+template <typename Iter>
+static bencode_value parse_string(Iter beg, const Iter& end)
 {
-	typedef std::string::const_iterator iter;
-	iter it = str.begin();
-	const iter end = str.end();
+	Iter it = beg;
 	for (; it != end && *it != ':'; ++it) { /* empty */ }
 	if (it == end) {
 		throw std::runtime_error("");
 	}
 	
 	std::size_t idx = 0;
-	int len = std::stoi(std::string(str.begin(), it), &idx);
+	int len = std::stoi(std::string(beg, it), &idx);
 	
-	if (static_cast<int>(idx) != it - str.begin()) {
+	if (static_cast<int>(idx) != it - beg) {
 		throw std::runtime_error("");
 	}
 	
@@ -31,28 +30,53 @@ static bencode_value parse_string(const std::string& str)
 	}
 }
 
-static bencode_value parse_integer(const std::string& str)
+template <typename Iter>
+static bencode_value parse_integer(Iter beg, const Iter& end)
 {
-	if (str.front() != 'i' || str.back() != 'e') {
-		throw std::runtime_error("");
-	}
-	std::int64_t val = std::stoll(std::string(str.begin() + 1, str.end() - 1));
+	std::int64_t val = std::stoll(std::string(beg, end));
 	return bencode_value(val);
 }
 
-static bencode_value parse_list(const std::string& str)
+template <typename Iter>
+static bencode_value parse_list(Iter beg, const Iter& end)
 {
-	return bencode_value(str);
+	if (beg == end) {
+		throw std::runtime_error("Empty string cannot be bdecoded");
+	}
+	return bencode_value("");
 }
 
-static bencode_value parse_dict(const std::string& str)
+template <typename Iter>
+static bencode_value parse_dict(Iter beg, const Iter& end)
 {
-	return bencode_value(str);
+	if (beg == end) {
+		throw std::runtime_error("Empty string cannot be bdecoded");
+	}
+	return bencode_value("");
+}
+
+template<typename Iter>
+bencode_value bdecode(Iter begin, Iter end)
+{
+	if (begin == end) {
+		throw std::runtime_error("Empty string cannot be bdecoded");
+	}
+	switch (*begin) {
+		case 'i':
+			return parse_integer(++begin, --end);
+		case 'l':
+			return parse_list(++begin, --end);
+		case 'd':
+			return parse_dict(++begin, --end);
+		default:
+			return parse_string(begin, end);
+	}
 }
 
 bencode_value bdecode(const std::string& str)
 {
-	switch(str[0]) {
+	return bdecode(str.begin(), str.end());
+	/*switch(str.at(0)) {
 		case 'i':
 			return parse_integer(str);
 		case 'l':
@@ -61,5 +85,5 @@ bencode_value bdecode(const std::string& str)
 			return parse_dict(str);
 		default:
 			return parse_string(str);
-	}
+	}*/
 }
