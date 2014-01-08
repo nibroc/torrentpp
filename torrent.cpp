@@ -19,6 +19,17 @@ void test_int()
 	ASSERT_EQUAL(bencode(0), "i0e");
 	ASSERT_EQUAL(bencode(1099511627776ll), "i1099511627776e");
 	ASSERT_EQUAL(bencode(-17), "i-17e");
+	
+	ASSERT_THROWS(bdecode("ie"));
+	ASSERT_THROWS(bdecode("i123ae"));
+	ASSERT_THROWS(bdecode("i123 e"));
+	ASSERT_THROWS(bdecode("i 123e"));
+	ASSERT_THROWS(bdecode("i 123 e"));
+	ASSERT_THROWS(bdecode("i e"));
+	ASSERT_THROWS(bdecode("iabce"));
+	
+	//Technically invalid by bencode standard, but not worth rejection over
+	//ASSERT_THROWS(bdecode("i-0e"));
 }
 
 void test_string()
@@ -30,6 +41,10 @@ void test_string()
 	ASSERT_THROWS(bdecode("9:!!!"));
 	ASSERT_THROWS(bdecode("-3:!!!"));
 	ASSERT_THROWS(bdecode("abc:!!!"));
+	ASSERT_THROWS(bdecode(":"));
+	ASSERT_THROWS(bdecode("3:"));
+	ASSERT_THROWS(bdecode("3"));
+	ASSERT_THROWS(bdecode("a:1"));
 }
 
 void test_list()
