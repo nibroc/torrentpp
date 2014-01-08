@@ -6,6 +6,62 @@
 #include <iterator>
 #include <iostream>
 #include <string>
+<<<<<<< HEAD
+=======
+
+#define ASSERT_TRUE_MSG(cond, msg) test_assert(cond, msg, __FILE__, __func__, __LINE__)
+#define ASSERT_EQUAL_MSG(x, y, msg) ASSERT_TRUE_MSG(x == y, msg)
+
+#define ASSERT_TRUE(cond) ASSERT_TRUE_MSG(cond, "")
+#define ASSERT_EQUAL(x, y) ASSERT_EQUAL_MSG(x, y, "")
+
+void test_assert(bool cond, const std::string& msg, const std::string& file, const std::string& func, int line)
+{
+	if (!cond) {
+		throw std::runtime_error("Failed test: " + msg + " in " 
+								+ file + " in " + func + " on line " + std::to_string(line));
+	}
+}
+
+void test_int()
+{
+	ASSERT_EQUAL(bdecode("i3e"), bencode_value(3));
+	ASSERT_EQUAL(bdecode("i0e"), bencode_value(0));
+	ASSERT_EQUAL(bdecode("i1099511627776e"), bencode_value(1099511627776ll));
+	ASSERT_EQUAL(bdecode("i-3e"), bencode_value(-3));
+	ASSERT_EQUAL(bencode(3), "i3e");
+	ASSERT_EQUAL(bencode(0), "i0e");
+	ASSERT_EQUAL(bencode(1099511627776ll), "i1099511627776e");
+	ASSERT_EQUAL(bencode(-17), "i-17e");
+}
+
+void test_string()
+{
+	ASSERT_EQUAL(bdecode("5:hello"), bencode_value("hello"));
+	ASSERT_EQUAL(bdecode("11:hello world"), bencode_value("hello world"));
+	ASSERT_EQUAL(bdecode("9:!!!333@@@"), bencode_value("!!!333@@@"));
+}
+
+void test_list()
+{
+	return;
+	const std::string encoded = "l4:spam4:eggse";
+	auto list = std::vector<bencode_value>{bencode_value("spam"), bencode_value("eggs")};
+	bencode_value expected = bencode_value(list);
+	ASSERT_TRUE(bdecode(encoded) == expected);
+}
+
+void test_dict()
+{ }
+
+void run_tests()
+{
+	test_int();
+	test_string();
+	test_list();
+	test_dict();
+}
+>>>>>>> 6bc7cab1c872a2288f91a974fcad99e558bc467f
 
 #define ASSERT_TRUE_MSG(cond, msg) test_assert(cond, msg, __FILE__, __func__, __LINE__)
 #define ASSERT_EQUAL_MSG(x, y, msg) ASSERT_TRUE_MSG(x == y, msg)
@@ -24,8 +80,9 @@
 #define ASSERT_THROWS_MSG(expr, msg) ASSERT_THROWS_HELPER(expr, msg, __FILE__, __func__, __LINE__)
 #define ASSERT_THROWS(expr) ASSERT_THROWS_MSG(expr, "")
 
-inline void test_assert(bool cond, const std::string& msg, const std::string& file, const std::string& func, int line)
+void test_assert(bool cond, const std::string& msg, const std::string& file, const std::string& func, int line)
 {
+<<<<<<< HEAD
 	if (!cond) {
 		if (msg.empty()) {
 			throw std::runtime_error("Failed test in "
@@ -39,7 +96,7 @@ inline void test_assert(bool cond, const std::string& msg, const std::string& fi
 	}
 }
 
-inline void throw_fail(const std::string& msg, const std::string& file, const std::string& func, int line)
+void throw_fail(const std::string& msg, const std::string& file, const std::string& func, int line)
 {
 	test_assert(false, msg, file, func, line);
 }
@@ -99,6 +156,8 @@ void run_tests()
 
 int main()
 {
+=======
+>>>>>>> 6bc7cab1c872a2288f91a974fcad99e558bc467f
 	run_tests();
 	return 0;
 	std::ifstream fs("example.torrent");
