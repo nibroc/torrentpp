@@ -4,15 +4,20 @@
 #include <cstddef>
 #include <string>
 #include <stdexcept>
-#include <iostream>
 
 template <typename Iter>
-static bencode_value parse_string(Iter beg, const Iter& end)
+static
+bencode_value parse_string(Iter& beg, const Iter& end)
 {
+	if (beg == end) {
+		throw std::runtime_error("Cannot parse empty string");
+	}
+	
 	Iter it = beg;
 	for (; it != end && *it != ':'; ++it) { /* empty */ }
+	
 	if (it == end) {
-		throw std::runtime_error("");
+		throw std::runtime_error("Invalid string format");
 	}
 	
 	std::size_t idx = 0;
@@ -23,57 +28,96 @@ static bencode_value parse_string(Iter beg, const Iter& end)
 	}
 	
 	++it;
+	beg = it + len;
+	return bencode_value(std::string(it, beg));
+}
+
+template <typename Iter>
+static 
+bencode_value parse_integer(Iter& beg, const Iter& end)
+{
+	if (*beg != 'i') {
+		throw std::runtime_error("Integers must start with i");
+	}
 	
-	if (end - it != len) {
-		throw std::runtime_error("");
-	} else {
-		return bencode_value(std::string(it, end));
+	auto last_valid = ++beg;
+	for (; last_valid != end && *last_valid != 'e'; ++last_valid) {
+		const auto& ch = *last_valid;
+		if (ch == '-' && last_valid == beg) { continue; }
+		if (!std::isdigit(ch)) {
+			throw std::runtime_error("Integers must be decimal");
+		}
 	}
+	
+	if (last_valid == end || *last_valid != 'e') {
+		throw std::runtime_error("Integers must end with e");
+	}
+	if (beg == last_valid) {
+		throw std::runtime_error("Integers must have at least one digit");
+	}
+	
+	bencode_value val(std::stoll(std::string(beg, last_valid)));
+	beg = ++last_valid;
+	return val;
 }
 
 template <typename Iter>
-static bencode_value parse_integer(Iter beg, const Iter& end)
-{
-	for (auto it = beg; it != end; ++it) {
-		const auto& ch = *it;
-		if (ch == '-' && it == beg) { continue; }
-		if (std::isdigit(*it)) { continue; }
-		throw std::runtime_error("Failed to parse integer");
-	}
-	return bencode_value(std::stoll(std::string(beg, end)));
-}
-
-template <typename Iter>
-static bencode_value parse_list(Iter beg, const Iter& end)
-{
-	if (beg == end) {
-		throw std::runtime_error("Empty string cannot be bdecoded");
-	}
-	return bencode_value("");
-}
-
-template <typename Iter>
-static bencode_value parse_dict(Iter beg, const Iter& end)
+static
+bencode_value parse_dict(Iter& beg, const Iter& end)
 {
 	if (beg == end) {
 		throw std::runtime_error("Empty string cannot be bdecoded");
 	}
 	return bencode_value("");
+}
+
+template <typename Iter>
+static
+bencode_value parse_list(Iter& beg, Iter end)
+{
+	if (beg == end) {
+		throw std::runtime_error("Empty string cannot be bdecoded");
+	}
+	
+	//Eat the prefix and suffix l and e
+	++beg;
+	--end;
+	
+	bencode_value::list_type list;
+	while (beg != end) {
+		bencode_value val;
+		switch (*beg) {
+			case 'i':
+				list.emplace_back(parse_integer(beg, end));
+				break;
+			case 'l':
+				list.emplace_back(parse_list(beg, end));
+				break;
+			case 'd':
+				list.emplace_back(parse_dict(beg, end));
+				break;
+			default:
+				list.emplace_back(parse_string(beg, end));
+		}
+	}
+	beg = ++end;
+	return bencode_value(list);
 }
 
 template<typename Iter>
-bencode_value bdecode(Iter begin, Iter end)
+static 
+bencode_value bdecode(Iter& begin, Iter end)
 {
 	if (begin == end) {
 		throw std::runtime_error("Empty string cannot be bdecoded");
 	}
 	switch (*begin) {
 		case 'i':
-			return parse_integer(++begin, --end);
+			return parse_integer(begin, end);
 		case 'l':
-			return parse_list(++begin, --end);
+			return parse_list(begin, end);
 		case 'd':
-			return parse_dict(++begin, --end);
+			return parse_dict(begin, end);
 		default:
 			return parse_string(begin, end);
 	}
@@ -81,5 +125,11 @@ bencode_value bdecode(Iter begin, Iter end)
 
 bencode_value bdecode(const std::string& str)
 {
-	return bdecode(str.begin(), str.end());
+	auto begin = str.cbegin();
+	const auto& end = str.cend();
+	bencode_value val(bdecode(begin, end));
+	if (begin != end) {
+		throw std::runtime_error("Unconsumed tokens");
+	}
+	return val;
 }

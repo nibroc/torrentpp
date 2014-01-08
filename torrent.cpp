@@ -37,23 +37,31 @@ void test_string()
 	ASSERT_EQUAL(bdecode("5:hello"), bencode_value("hello"));
 	ASSERT_EQUAL(bdecode("11:hello world"), bencode_value("hello world"));
 	ASSERT_EQUAL(bdecode("9:!!!333@@@"), bencode_value("!!!333@@@"));
-	
+	ASSERT_EQUAL(bdecode("0:"), bencode_value(""));
+
 	ASSERT_THROWS(bdecode("9:!!!"));
 	ASSERT_THROWS(bdecode("-3:!!!"));
 	ASSERT_THROWS(bdecode("abc:!!!"));
 	ASSERT_THROWS(bdecode(":"));
+	ASSERT_THROWS(bdecode(":abc"));
 	ASSERT_THROWS(bdecode("3:"));
 	ASSERT_THROWS(bdecode("3"));
 	ASSERT_THROWS(bdecode("a:1"));
+	ASSERT_THROWS(bdecode(""));
 }
 
 void test_list()
 {
-	return;
-	const std::string encoded = "l4:spam4:eggse";
-	auto list = std::vector<bencode_value>{bencode_value("spam"), bencode_value("eggs")};
-	bencode_value expected = bencode_value(list);
-	ASSERT_TRUE(bdecode(encoded) == expected);
+	bencode_value::list_type simple_list_vector{bencode_value("spam"), bencode_value("eggs")};
+	bencode_value simple_list(simple_list_vector);
+	std::string simple_list_string("l4:spam4:eggse");
+	
+	bencode_value::list_type nested_list_vector{bencode_value(35), simple_list};
+	bencode_value nested_list(nested_list_vector);
+	std::string nested_list_string("li35e" + simple_list_string + "e");
+	
+	ASSERT_EQUAL(bdecode(simple_list_string), simple_list);
+	ASSERT_EQUAL(bdecode(nested_list_string), nested_list);
 }
 
 void test_dict()
@@ -70,9 +78,4 @@ void run_tests()
 int main()
 {
 	run_tests();
-	return 0;
-	std::ifstream fs("example.torrent");
-	std::string s = std::string(std::istream_iterator<char>(fs), std::istream_iterator<char>());
-	bencode_value v(bdecode(s));
-	//std::cout << v.to_string() << std::endl;
 }
