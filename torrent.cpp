@@ -7,6 +7,7 @@
 #include <fstream>
 #include <iterator>
 #include <iostream>
+#include <stdexcept>
 #include <string>
 
 void test_int()
@@ -87,7 +88,12 @@ void run_tests()
 	test_dict();
 }
 
+void throws() {
+	
+}
+
 int main()
 {
-	run_tests();
+	ASSERT_THROWS_EXCEPTION(throws(), int);
+	//run_tests();
 }
