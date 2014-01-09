@@ -25,7 +25,7 @@ depend: .depend
 	$(CXX) $(CXXFLAGS) -MM $(SRCS) > ./.depend
 
 clean:
-	$(RM) $(RMFLAGS) $(EXE) $(TOK) $(OBJS) retrieve .depend
+	$(RM) $(RMFLAGS) $(EXE) $(TOK) $(OBJS) retrieve .depend bencode_test
 
 build_tests: build
 	$(CXX) $(CXXFLAGS) -c bencode_test.cpp
