@@ -80,20 +80,12 @@ void test_dict()
 	ASSERT_EQUAL(bdecode(simple_dict_list_string), simple_dict_list);
 }
 
-void run_tests()
+int main()
 {
+	UTESTPP_INIT();
 	test_int();
 	test_string();
 	test_list();
 	test_dict();
-}
-
-void throws() {
-	
-}
-
-int main()
-{
-	ASSERT_THROWS_EXCEPTION(throws(), int);
-	//run_tests();
+	UTESTPP_FINISH();
 }
