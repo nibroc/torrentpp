@@ -27,4 +27,11 @@ depend: .depend
 clean:
 	$(RM) $(RMFLAGS) $(EXE) $(TOK) $(OBJS) retrieve .depend
 
+build_tests: build
+	$(CXX) $(CXXFLAGS) -c bencode_test.cpp
+	$(CXX) $(CXXFLAGS) -o bencode_test bencode_test.o bencode.o bdecode.o $(LDFLAGS) $(LDLIBS)
+
+tests: build_tests
+	./bencode_test
+
 -include $(DEPS)
