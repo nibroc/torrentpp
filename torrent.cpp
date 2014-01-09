@@ -65,7 +65,19 @@ void test_list()
 }
 
 void test_dict()
-{ }
+{
+	bencode_value::dict_type simple_dict_map;
+	simple_dict_map[bencode_value("foo")] = bdecode("l3:bar3:baze");
+	bencode_value simple_dict(simple_dict_map);
+	std::string simple_dict_string("d3:fool3:bar3:bazee");
+	
+	bencode_value::list_type simple_dict_list_vector{bencode_value("foo"), simple_dict};
+	bencode_value simple_dict_list(simple_dict_list_vector);
+	std::string simple_dict_list_string("l3:foo" + simple_dict_string + "e");
+	
+	ASSERT_EQUAL(bdecode(simple_dict_string), simple_dict);
+	ASSERT_EQUAL(bdecode(simple_dict_list_string), simple_dict_list);
+}
 
 void run_tests()
 {

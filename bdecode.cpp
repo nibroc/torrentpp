@@ -6,8 +6,13 @@
 #include <stdexcept>
 
 template <typename Iter>
-static
-bencode_value parse_string(Iter& beg, const Iter& end)
+static bencode_value parse_dict(Iter& beg, const Iter& end);
+
+template<typename Iter>
+static bencode_value bdecode(Iter& begin, Iter end);
+
+template <typename Iter>
+static bencode_value parse_string(Iter& beg, const Iter& end)
 {
 	if (beg == end) {
 		throw std::runtime_error("Cannot parse empty string");
@@ -33,8 +38,7 @@ bencode_value parse_string(Iter& beg, const Iter& end)
 }
 
 template <typename Iter>
-static 
-bencode_value parse_integer(Iter& beg, const Iter& end)
+static bencode_value parse_integer(Iter& beg, const Iter& end)
 {
 	if (*beg != 'i') {
 		throw std::runtime_error("Integers must start with i");
@@ -62,30 +66,17 @@ bencode_value parse_integer(Iter& beg, const Iter& end)
 }
 
 template <typename Iter>
-static
-bencode_value parse_dict(Iter& beg, const Iter& end)
-{
-	if (beg == end) {
-		throw std::runtime_error("Empty string cannot be bdecoded");
-	}
-	return bencode_value("");
-}
-
-template <typename Iter>
-static
-bencode_value parse_list(Iter& beg, Iter end)
+static bencode_value parse_list(Iter& beg, Iter end)
 {
 	if (beg == end) {
 		throw std::runtime_error("Empty string cannot be bdecoded");
 	}
 	
-	//Eat the prefix and suffix l and e
+	//Eat the prefix and suffix l
 	++beg;
-	--end;
 	
 	bencode_value::list_type list;
-	while (beg != end) {
-		bencode_value val;
+	while (*beg != 'e' && beg != end) {
 		switch (*beg) {
 			case 'i':
 				list.emplace_back(parse_integer(beg, end));
@@ -100,13 +91,39 @@ bencode_value parse_list(Iter& beg, Iter end)
 				list.emplace_back(parse_string(beg, end));
 		}
 	}
-	beg = ++end;
+	if (beg == end || *beg != 'e') {
+		throw std::runtime_error("Lists must be suffixed by e");
+	}
+	++beg;
 	return bencode_value(list);
 }
 
+template <typename Iter>
+static bencode_value parse_dict(Iter& beg, const Iter& end)
+{
+	if (beg == end) {
+		throw std::runtime_error("Empty string cannot be bdecoded");
+	}
+	
+	//Eat the prefix d
+	++beg;
+	
+	bencode_value::dict_type dict;
+	while (beg != end && *beg != 'e') {
+		dict[bdecode(beg, end)] = bdecode(beg, end);
+	}
+	if (beg == end || *beg != 'e') {
+		throw std::runtime_error("Dicts must be suffixed by e");
+	}
+	
+	//Eat the suffix d
+	++beg;
+	
+	return bencode_value(dict);
+}
+
 template<typename Iter>
-static 
-bencode_value bdecode(Iter& begin, Iter end)
+static bencode_value bdecode(Iter& begin, Iter end)
 {
 	if (begin == end) {
 		throw std::runtime_error("Empty string cannot be bdecoded");
@@ -129,7 +146,7 @@ bencode_value bdecode(const std::string& str)
 	const auto& end = str.cend();
 	bencode_value val(bdecode(begin, end));
 	if (begin != end) {
-		throw std::runtime_error("Unconsumed tokens");
+		throw std::runtime_error("Unconsumed tokens: " + std::string(begin, end));
 	}
 	return val;
 }
